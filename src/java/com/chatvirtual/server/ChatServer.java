@@ -356,7 +356,7 @@ public class ChatServer {
     }
 
     private void createRoom(Session session) {
-        String id = java.util.UUID.randomUUID().toString().substring(0, 8);
+        String id = java.util.UUID.randomUUID().toString().substring(0, 12);
         Room room = new Room(id);
         room.members.put(session.getId(), session);
         ROOMS.put(id, room);
@@ -371,7 +371,10 @@ public class ChatServer {
             error(session, "Sala no disponible.");
             return;
         }
-        room.members.put(session.getId(), session);
+        if (room.members.putIfAbsent(session.getId(), session) != null) {
+            error(session, "Ya perteneces a esa sala.");
+            return;
+        }
         JsonObject joined = packet("room_joined");
         joined.addProperty("roomId", roomId);
         joined.add("members", new com.google.gson.Gson().toJsonTree(room.members.keySet().stream().filter(id -> !id.equals(session.getId())).toArray()));
@@ -435,18 +438,26 @@ public class ChatServer {
      * sesión.
      */
     private void broadcastUsers() {
-        com.google.gson.Gson gson = new com.google.gson.Gson();
         JsonObject out = packet("user_list");
-        out.add("users", gson.toJsonTree(CLIENTS.values().stream().map(c -> {
+        com.google.gson.JsonArray users = activeUsers();
+        out.add("users", users);
+        String roster = CLIENTS.values().stream().map(c -> c.name + "[" + c.id + ", " + c.status + "]").collect(java.util.stream.Collectors.joining(", "));
+        LOG.info(() -> "Usuarios activos (" + CLIENTS.size() + "): " + roster);
+        CLIENTS.keySet().forEach(s -> send(s, out));
+        AdminEndpoint.publish(users);
+    }
+
+    /** Devuelve una copia JSON del roster para el panel protegido y los clientes. */
+    static com.google.gson.JsonArray activeUsers() {
+        com.google.gson.JsonArray users = new com.google.gson.JsonArray();
+        CLIENTS.values().forEach(c -> {
             JsonObject u = new JsonObject();
             u.addProperty("id", c.id);
             u.addProperty("name", c.name);
             u.addProperty("status", c.status);
-            return u;
-        }).toArray()));
-        String roster = CLIENTS.values().stream().map(c -> c.name + "[" + c.id + ", " + c.status + "]").collect(java.util.stream.Collectors.joining(", "));
-        LOG.info(() -> "Usuarios activos (" + CLIENTS.size() + "): " + roster);
-        CLIENTS.keySet().forEach(s -> send(s, out));
+            users.add(u);
+        });
+        return users;
     }
 
     private Session findSession(String id) {

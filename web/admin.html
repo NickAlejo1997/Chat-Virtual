@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Administración · Chat Virtual</title>
+  <style>
+    :root{font-family:system-ui,-apple-system,"Segoe UI",sans-serif;color:#172033;background:#eef2f7;font-synthesis:none}*{box-sizing:border-box}body{margin:0;padding:32px;min-height:100vh}.panel{max-width:880px;margin:0 auto;background:white;border-radius:18px;box-shadow:0 18px 60px #17345a18;overflow:hidden}.head{padding:24px 28px;background:#5868e8;color:white;display:flex;justify-content:space-between;align-items:center;gap:16px}.head h1{font-size:21px;margin:0}.head p{font-size:13px;opacity:.85;margin:5px 0 0}.count{font-size:30px;font-weight:800}.content{padding:24px 28px}.login{display:flex;gap:10px;max-width:560px}.login input{flex:1;min-width:0;border:1px solid #dce2eb;border-radius:10px;padding:12px;font:inherit}.button{border:0;border-radius:10px;background:#5868e8;color:white;font-weight:700;padding:11px 16px;cursor:pointer}.status{font-size:13px;color:#718096;min-height:20px;margin:12px 0}.table-wrap{overflow:auto}table{width:100%;border-collapse:collapse;text-align:left}th,td{padding:13px 12px;border-bottom:1px solid #edf0f5}th{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:#8390a4}td{font-size:14px}.badge{display:inline-block;padding:5px 9px;border-radius:20px;background:#e8f8ef;color:#16854d;font-size:12px}.badge.away{background:#fff5df;color:#9b6910}.badge.dnd{background:#ffeded;color:#b83c3c}.empty{text-align:center;color:#8995a8;padding:34px 0}.foot{padding:15px 28px;border-top:1px solid #edf0f5;color:#8a96a9;font-size:12px;display:flex;justify-content:space-between}.foot a{color:#5868e8;text-decoration:none}@media(max-width:560px){body{padding:12px}.head,.content{padding:19px}.login{flex-direction:column}.foot{padding:14px 19px}}
+  </style>
+</head>
+<body>
+  <main class="panel">
+    <header class="head"><div><h1>Usuarios conectados</h1><p>Panel en vivo de Chat Virtual</p></div><div class="count" id="count">0</div></header>
+    <section class="content">
+      <form class="login" id="loginForm"><input id="token" type="password" autocomplete="current-password" placeholder="Token administrativo" required><button class="button">Conectar</button></form>
+      <div class="status" id="status" role="status">Introduce el token configurado en el servidor Tomcat.</div>
+      <div class="table-wrap"><table><thead><tr><th>Seudónimo</th><th>Estado</th><th>ID de sesión</th></tr></thead><tbody id="rows"><tr><td class="empty" colspan="3">Conecta el panel para cargar el roster.</td></tr></tbody></table></div>
+    </section>
+    <footer class="foot"><span>La lista se actualiza en tiempo real.</span><a id="chatLink" href="./">Abrir chat</a></footer>
+  </main>
+  <script>
+    (()=>{
+      const $=selector=>document.querySelector(selector), labels={online:'Conectado',away:'Desconectado',dnd:'No molestar'};
+      let socket=null;
+      const context=location.pathname.replace(/\/admin\.html?$/i,'').replace(/\/$/,'');
+      function socketUrl(){const scheme=location.protocol==='https:'?'wss:':'ws:';return `${scheme}//${location.host}${context}/admin`}
+      function showStatus(message,isError=false){$('#status').textContent=message;$('#status').style.color=isError?'#bd3e3e':'#718096'}
+      function render(users){const body=$('#rows');body.replaceChildren();$('#count').textContent=String(users.length);if(!users.length){const row=document.createElement('tr'),cell=document.createElement('td');cell.colSpan=3;cell.className='empty';cell.textContent='No hay usuarios conectados.';row.append(cell);body.append(row);return}
+        users.sort((a,b)=>a.name.localeCompare(b.name,'es')).forEach(user=>{const row=document.createElement('tr'),name=document.createElement('td'),state=document.createElement('td'),id=document.createElement('td'),badge=document.createElement('span');name.textContent=user.name;badge.className=`badge ${user.status==='online'?'':user.status}`;badge.textContent=labels[user.status]||user.status;state.append(badge);id.textContent=user.id;row.append(name,state,id);body.append(row)})}
+      $('#loginForm').addEventListener('submit',event=>{event.preventDefault();if(socket&&socket.readyState<2)socket.close();const token=$('#token').value;showStatus('Conectando…');socket=new WebSocket(socketUrl());socket.onopen=()=>socket.send(JSON.stringify({type:'authenticate',token}));socket.onmessage=event=>{const message=JSON.parse(event.data);if(message.type==='admin_users'){render(message.users);showStatus('Conectado al servidor.')}else if(message.type==='admin_disabled'||message.type==='error'){showStatus(message.message,true)}};socket.onerror=()=>showStatus('No se pudo conectar al panel. Verifica que el WAR esté actualizado.',true);socket.onclose=()=>{if($('#status').textContent==='Conectando…')showStatus('El servidor cerró la conexión. Revisa el token y la configuración de Tomcat.',true)}});
+    })();
+  </script>
+</body>
+</html>

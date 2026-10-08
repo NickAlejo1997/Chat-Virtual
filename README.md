@@ -24,6 +24,18 @@ En la pantalla inicial se indica IP o dominio, puerto y context path. Si la inte
 
 El servidor WebSocket no requiere configuración de IP/puerto aparte del conector normal de Tomcat. Para producción, usa HTTPS/WSS. La app es un prototipo funcional: no incorpora cuentas ni autenticación, y las llamadas usan un servidor STUN público sin TURN. TURN mejora la conexión cuando la red del usuario bloquea conexiones P2P. Para despliegues con varias instancias, hace falta presencia compartida y enrutamiento entre instancias; el mapa en memoria actual funciona con una sola.
 
+## Panel de usuarios conectados
+
+Abre `/Chat-Virtual/admin.html` y escribe el mismo token secreto que configuraste en el proceso Tomcat. El panel solo recibe seudónimos, estado e ID de sesión, y se actualiza al conectarse, desconectarse o cambiar de estado un usuario. Sin token configurado, el endpoint administrativo permanece deshabilitado.
+
+En Windows, para Tomcat iniciado con `startup.bat`, configura `CHAT_ADMIN_TOKEN` en `bin/setenv.bat` antes de iniciar o reiniciar Tomcat:
+
+```bat
+set "CHAT_ADMIN_TOKEN=REEMPLAZA_POR_UN_TOKEN_LARGO_Y_ALEATORIO"
+```
+
+Si Tomcat corre como servicio de Windows, define `CHAT_ADMIN_TOKEN` para ese servicio o añade `-Dchat.adminToken=...` en sus opciones Java y reinícialo. No publiques el token ni lo pongas en el repositorio.
+
 ## Despliegue gratuito de prueba en Render
 
 Render acepta aplicaciones Java mediante Docker y admite conexiones WebSocket. Este repositorio incluye un `Dockerfile` que empaqueta el WAR y ejecuta Tomcat en el puerto que Render asigne:
