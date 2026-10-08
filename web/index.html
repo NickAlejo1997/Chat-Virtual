@@ -1,0 +1,985 @@
+<!doctype html>
+<html lang="es">
+
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width,initial-scale=1">
+        <title>Chat Virtual</title>
+        <style>
+            :root {
+                font-family: Inter, system-ui, -apple-system, "Segoe UI", sans-serif;
+                color: #172033;
+                background: #eef2f7;
+                font-synthesis: none
+            }
+
+            * {
+                box-sizing: border-box
+            }
+
+            body {
+                margin: 0;
+                min-height: 100vh;
+                display: grid;
+                place-items: center;
+                padding: 20px
+            }
+
+            .shell {
+                width: min(1120px, 100%);
+                height: min(760px, calc(100vh - 40px));
+                min-height: 540px;
+                background: #fff;
+                border-radius: 22px;
+                box-shadow: 0 24px 80px #18335a20;
+                display: grid;
+                grid-template-columns: 300px 1fr;
+                overflow: hidden
+            }
+
+            .side {
+                background: #f8fafc;
+                border-right: 1px solid #e6ebf2;
+                display: flex;
+                flex-direction: column
+            }
+
+            .brand {
+                padding: 24px 22px 18px;
+                font-weight: 800;
+                font-size: 20px
+            }
+
+            .brand span {
+                color: #5868e8
+            }
+
+            .me {
+                padding: 0 20px 20px;
+                display: flex;
+                align-items: center;
+                gap: 10px
+            }
+
+            .avatar {
+                width: 38px;
+                height: 38px;
+                border-radius: 50%;
+                background: #e4e7ff;
+                color: #5868e8;
+                display: grid;
+                place-items: center;
+                font-weight: 800;
+                flex: none
+            }
+
+            .me small,
+            .contact small {
+                display: block;
+                color: #8290a4;
+                font-size: 12px;
+                margin-top: 3px
+            }
+
+            .me select {
+                margin-left: auto;
+                border: 1px solid #e1e6ee;
+                border-radius: 10px;
+                padding: 7px;
+                background: #fff;
+                color: #536176
+            }
+
+            .caption {
+                padding: 12px 20px;
+                color: #929db0;
+                text-transform: uppercase;
+                letter-spacing: .08em;
+                font-size: 10px;
+                font-weight: 800
+            }
+
+            .users {
+                overflow: auto;
+                flex: 1
+            }
+
+            .contact {
+                width: 100%;
+                border: 0;
+                background: transparent;
+                display: flex;
+                align-items: center;
+                gap: 11px;
+                text-align: left;
+                padding: 12px 20px;
+                cursor: pointer;
+                color: inherit
+            }
+
+            .contact:hover,
+            .contact.selected {
+                background: #eceeff
+            }
+
+            .contact .dot {
+                width: 9px;
+                height: 9px;
+                border-radius: 50%;
+                background: #34bd81;
+                margin-left: auto
+            }
+
+            .contact .dot.away {
+                background: #e9ae3c
+            }
+
+            .contact .dot.dnd {
+                background: #ed6767
+            }
+
+            .sidebar-foot {
+                padding: 14px 20px;
+                border-top: 1px solid #e6ebf2;
+                color: #8a96a9;
+                font-size: 12px
+            }
+
+            .main {
+                display: flex;
+                flex-direction: column;
+                min-width: 0
+            }
+
+            .top {
+                height: 76px;
+                border-bottom: 1px solid #edf0f5;
+                padding: 0 24px;
+                display: flex;
+                align-items: center;
+                justify-content: space-between
+            }
+
+            .top strong {
+                font-size: 16px
+            }
+
+            .top small {
+                color: #8995a8
+            }
+
+            .actions {
+                display: flex;
+                gap: 8px
+            }
+
+            .button {
+                border: 0;
+                border-radius: 10px;
+                padding: 10px 13px;
+                background: #5868e8;
+                color: #fff;
+                font-weight: 700;
+                cursor: pointer
+            }
+
+            .button.secondary {
+                background: #eef0ff;
+                color: #5868e8
+            }
+
+            .button.muted {
+                background: #f2f4f8;
+                color: #4c5b71
+            }
+
+            .button:disabled {
+                opacity: .45;
+                cursor: not-allowed
+            }
+
+            .messages {
+                padding: 24px;
+                overflow: auto;
+                flex: 1;
+                display: flex;
+                flex-direction: column;
+                gap: 12px
+            }
+
+            .hint {
+                margin: auto;
+                text-align: center;
+                color: #8b97aa;
+                max-width: 360px;
+                line-height: 1.6
+            }
+
+            .bubble {
+                max-width: min(75%, 540px);
+                padding: 11px 14px;
+                border-radius: 15px;
+                background: #f1f4f8;
+                align-self: flex-start;
+                overflow-wrap: anywhere
+            }
+
+            .bubble.mine {
+                background: #5868e8;
+                color: white;
+                align-self: flex-end
+            }
+
+            .bubble small {
+                display: block;
+                opacity: .65;
+                font-size: 10px;
+                margin-top: 6px
+            }
+
+            .composer {
+                padding: 16px 20px;
+                border-top: 1px solid #edf0f5
+            }
+
+            .input-row {
+                display: flex;
+                gap: 9px
+            }
+
+            .input-row input[type=text] {
+                flex: 1;
+                min-width: 0;
+                border: 1px solid #e1e6ee;
+                border-radius: 12px;
+                padding: 12px 14px;
+                font: inherit;
+                outline: none
+            }
+
+            .input-row input:focus {
+                border-color: #8792f0
+            }
+
+            .file-label {
+                cursor: pointer;
+                display: grid;
+                place-items: center;
+                padding: 0 11px;
+                background: #f2f4f8;
+                border-radius: 11px;
+                color: #5868e8;
+                font-size: 20px
+            }
+
+            .progress {
+                font-size: 12px;
+                color: #65738a;
+                margin-top: 8px;
+                min-height: 16px
+            }
+
+            .toast {
+                position: fixed;
+                bottom: 25px;
+                left: 50%;
+                transform: translateX(-50%);
+                background: #172033;
+                color: #fff;
+                padding: 12px 18px;
+                border-radius: 12px;
+                opacity: 0;
+                transition: opacity .2s;
+                pointer-events: none;
+                z-index: 5
+            }
+
+            .toast.show {
+                opacity: 1
+            }
+
+            .login {
+                position: fixed;
+                inset: 0;
+                background: #172033b0;
+                display: grid;
+                place-items: center;
+                z-index: 4
+            }
+
+            .login-card {
+                background: #fff;
+                border-radius: 20px;
+                padding: 30px;
+                width: min(400px, calc(100% - 32px));
+                box-shadow: 0 20px 70px #0003
+            }
+
+            .login-card h1 {
+                margin: 0 0 8px;
+                font-size: 24px
+            }
+
+            .login-card p {
+                color: #7b879a;
+                margin: 0 0 22px
+            }
+
+            .login-card input {
+                width: 100%;
+                padding: 12px;
+                border: 1px solid #dce2eb;
+                border-radius: 10px;
+                font: inherit;
+                margin-bottom: 12px
+            }
+
+            .callbox {
+                display: none;
+                position: fixed;
+                right: 20px;
+                bottom: 20px;
+                width: min(520px, calc(100% - 40px));
+                background: #111827;
+                border-radius: 16px;
+                padding: 12px;
+                color: white;
+                z-index: 3;
+                box-shadow: 0 16px 45px #0004
+            }
+
+            .callbox video {
+                width: 100%;
+                max-height: 300px;
+                background: #05070b;
+                border-radius: 10px;
+                object-fit: cover
+            }
+
+            .callbox .remote-grid {
+                display: grid;
+                grid-template-columns: repeat(2, 1fr);
+                gap: 8px
+            }
+
+            .callbox .remote-grid video {
+                height: 160px
+            }
+
+            .callbar {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                padding: 8px
+            }
+
+            .callbar button {
+                border: 0;
+                border-radius: 9px;
+                padding: 9px 12px;
+                cursor: pointer
+            }
+
+            .room-tools {
+                display: flex;
+                gap: 7px;
+                padding: 0 14px 12px
+            }
+
+            .room-tools input {
+                min-width: 0;
+                width: 100px;
+                border: 1px solid #e1e6ee;
+                border-radius: 9px;
+                padding: 8px
+            }
+
+            .offer {
+                padding: 8px 20px;
+                background: #fffae9;
+                color: #775a16;
+                font-size: 13px
+            }
+
+            .offer button {
+                margin-left: 8px;
+                border: 0;
+                border-radius: 7px;
+                padding: 6px 9px;
+                background: #e9ae3c;
+                cursor: pointer
+            }
+
+            @media(max-width:700px) {
+                body {
+                    padding: 0
+                }
+
+                .shell {
+                    height: 100vh;
+                    min-height: 0;
+                    border-radius: 0;
+                    grid-template-columns: 84px 1fr
+                }
+
+                .brand {
+                    padding: 20px 9px;
+                    text-align: center;
+                    font-size: 0
+                }
+
+                .brand span {
+                    font-size: 20px
+                }
+
+                .me {
+                    padding: 0 22px 18px
+                }
+
+                .me>div:not(.avatar),
+                .me select,
+                .caption,
+                .contact>span:not(.avatar):not(.dot),
+                .sidebar-foot {
+                    display: none
+                }
+
+                .contact {
+                    padding: 12px 22px
+                }
+
+                .contact .dot {
+                    margin-left: -5px;
+                    margin-top: 27px
+                }
+
+                .top {
+                    padding: 0 14px
+                }
+
+                .top small {
+                    display: none
+                }
+
+                .actions {
+                    gap: 4px
+                }
+
+                .button {
+                    padding: 9px;
+                    font-size: 12px
+                }
+
+                .messages {
+                    padding: 16px
+                }
+
+                .composer {
+                    padding: 12px
+                }
+
+                .room-tools {
+                    flex-wrap: wrap
+                }
+
+                .room-tools input {
+                    flex: 1
+                }
+            }
+        </style>
+    </head>
+
+    <body>
+        <section class="shell">
+            <aside class="side">
+                <div class="brand">Chat <span>Virtual</span></div>
+                <div class="me">
+                    <div class="avatar" id="myAvatar">?</div>
+                    <div><strong id="myName">Invitado</strong><small id="connectionState">Desconectado</small></div>
+                    <select id="myStatus" title="Cambiar estado">
+                        <option value="online">Conectado</option>
+                        <option value="away">Desconectado</option>
+                        <option value="dnd">No molestar</option>
+                    </select>
+                </div>
+                <div class="caption">Contactos <span id="userCount"></span></div>
+                <div class="users" id="users"></div>
+                <div class="room-tools">
+                    <button class="button secondary" id="createRoom">Crear sala</button>
+                    <input id="roomCode" placeholder="Código sala"><button class="button muted"
+                                                                           id="joinRoom">Unirse</button>
+                </div>
+                <div class="sidebar-foot">Chat privado · WebRTC para llamadas</div>
+            </aside>
+            <main class="main">
+                <header class="top">
+                    <div><strong id="peerName">Selecciona un contacto</strong><small id="peerState"> Tus mensajes se envían
+                            de forma privada</small></div>
+                    <div class="actions"><button class="button secondary" id="audioCall" disabled>Audio</button><button
+                            class="button secondary" id="videoCall" disabled>Video</button></div>
+                </header>
+                <div class="messages" id="messages">
+                    <div class="hint">Elige a alguien de la lista para comenzar una conversación privada.<br>Los archivos se
+                        transfieren por fragmentos con confirmación.</div>
+                </div>
+                <div id="offerArea"></div>
+                <form class="composer" id="composer">
+                    <div class="input-row"><label class="file-label" title="Enviar archivo">＋<input id="fileInput"
+                                                                                                    type="file" hidden></label><input id="messageInput" type="text"
+                                                          placeholder="Escribe un mensaje…" autocomplete="off"><button class="button"
+                                                          type="submit">Enviar</button></div>
+                    <div class="progress" id="progress"></div>
+                </form>
+            </main>
+        </section>
+        <div class="callbox" id="callbox">
+            <div class="remote-grid" id="remoteGrid"></div><video id="localVideo" autoplay muted playsinline></video>
+            <div class="callbar"><span id="callState">Llamada</span><button id="hangup"
+                                                                            style="background:#e35555;color:#fff">Colgar</button></div>
+        </div>
+        <div class="login" id="login">
+            <div class="login-card">
+                <h1>Bienvenido al chat</h1>
+                <p>Configura el servidor e ingresa tu nombre.</p>
+                <form id="loginForm"><input id="nickname" maxlength="32" placeholder="Tu nombre" required><input
+                        id="serverHost" placeholder="IP o dominio" required><input id="serverPort" inputmode="numeric"
+                        placeholder="Puerto" required><input id="contextPath"
+                        placeholder="Context path (por ejemplo, /Chat-Virtual)" required><button class="button"
+                        style="width:100%">Conectar</button></form>
+            </div>
+        </div>
+        <div class="toast" id="toast"></div>
+        <script>
+            (() => {
+                const $ = s => document.querySelector(s), users = $('#users'), messages = $('#messages'), toastEl = $('#toast');
+                let ws, me, selected = null, contacts = [], outgoing = null, incoming = new Map(), localStream = null, roomId = null;
+                const chatHistory = new Map();
+                const peers = new Map();
+                const statusLabels = {online: 'Conectado', away: 'Desconectado', dnd: 'No molestar'};
+                const send = o => {
+                    if (ws?.readyState === WebSocket.OPEN)
+                        ws.send(JSON.stringify(o));
+                    else
+                        toast('No hay conexión con el servidor')
+                };
+                function toast(text) {
+                    toastEl.textContent = text;
+                    toastEl.classList.add('show');
+                    setTimeout(() => toastEl.classList.remove('show'), 3200)
+                }
+                function socketUrl(host, port, context) {
+                    const scheme = location.protocol === 'https:' ? 'wss:' : 'ws:';
+                    const base = `${scheme}//${host}${port ? `:${port}` : ''}${context === '/' ? '' : context}`;
+                    return `${base}/chat`
+                }
+                function connect(name, host, port, context) {
+                    me = name;
+                    $('#myName').textContent = name;
+                    $('#myAvatar').textContent = name[0].toUpperCase();
+                    $('#login').style.display = 'none';
+                    ws = new WebSocket(socketUrl(host, port, context));
+                    ws.binaryType = 'arraybuffer';
+                    ws.onopen = () => {
+                        send({type: 'hello', name});
+                        $('#connectionState').textContent = 'Conectando…'
+                    };
+                    ws.onclose = () => {
+                        $('#connectionState').textContent = 'Desconectado';
+                        toast('Conexión cerrada. Actualiza la página para reconectar.')
+                    };
+                    ws.onerror = () => toast('No se pudo conectar al servidor');
+                    ws.onmessage = event => event.data instanceof ArrayBuffer ? receiveBinary(event.data) : receiveJson(JSON.parse(event.data));
+                }
+                $('#serverHost').value = location.hostname;
+                $('#serverPort').value = location.port || (location.protocol === 'https:' ? '443' : '80');
+                $('#contextPath').value = location.pathname.replace(/\/index\.html?$/i, '').replace(/\/$/, '') || '/';
+                $('#loginForm').onsubmit = e => {
+                    e.preventDefault();
+                    const name = $('#nickname').value.trim(), host = $('#serverHost').value.trim(), port = Number($('#serverPort').value), context = $('#contextPath').value.trim();
+                    if (!name || !host || !Number.isInteger(port) || port < 1 || port > 65535 || !context.startsWith('/'))
+                        return toast('Revisa host, puerto y context path (debe iniciar con /)');
+                    connect(name, host, port, context.replace(/\/$/, '') || '/')
+                };
+                $('#myStatus').onchange = e => send({type: 'status_update', status: e.target.value});
+                function receiveJson(m) {
+                    switch (m.type) {
+                        case 'user_list':
+                        {
+                            const self = m.users.find(u => u.name.toLowerCase() === me.toLowerCase());
+                            if (self) {
+                                document.body.dataset.userId = self.id;
+                                $('#connectionState').textContent = 'Conectado'
+                            }
+                            contacts = m.users.filter(u => u.id !== getMyId());
+                            renderUsers();
+                            break
+                        }
+                        case 'private_message':
+                            appendMessage(m.name, m.text, m.time, false, m.from);
+                            if (selected?.id !== m.from)
+                                toast(`Nuevo mensaje de ${m.name}`);
+                            break;
+                        case 'error':
+                            toast(m.message);
+                            break;
+                        case 'file_offer':
+                            showFileOffer(m);
+                            break;
+                        case 'file_ready':
+                            if (outgoing?.fileId === m.fileId)
+                                sendFileChunks(outgoing);
+                            break;
+                        case 'file_ack':
+                            if (outgoing?.fileId === m.fileId) {
+                                outgoing.acked = m.bytes;
+                                $('#progress').textContent = `Enviado ${formatBytes(m.bytes)} de ${formatBytes(outgoing.file.size)}`;
+                                if (outgoing.resolve) {
+                                    outgoing.resolve();
+                                    outgoing.resolve = null
+                                }
+                            }
+                            break;
+                        case 'file_complete':
+                            if (outgoing?.fileId === m.fileId) {
+                                toast('Archivo enviado');
+                                outgoing = null;
+                                $('#progress').textContent = 'Transferencia completada'
+                            }
+                            break;
+                        case 'file_end':
+                            finishIncoming(m.fileId);
+                            break;
+                        case 'signal':
+                            handleSignal(m);
+                            break;
+                        case 'room_created':
+                            roomId = m.roomId;
+                            $('#roomCode').value = roomId;
+                            toast(`Sala creada: ${roomId}. Comparte el código.`);
+                            break;
+                        case 'room_joined':
+                            roomId = m.roomId;
+                            toast(`Te uniste a la sala ${roomId}`);
+                            break;
+                        case 'room_peer_joined':
+                            offerToPeer(m.peerId, true);
+                            break;
+                        case 'room_peer_left':
+                            closePeer(m.peerId);
+                            break;
+                    }
+                }
+                function getMyId() {
+                    return document.body.dataset.userId || ''
+                }
+                function renderUsers() {
+                    const self = contacts.find(u => u.name.toLowerCase() === me.toLowerCase());
+                    if (self)
+                        document.body.dataset.userId = self.id;
+                    $('#userCount').textContent = `(${contacts.length})`;
+                    users.replaceChildren();
+                    contacts.forEach(u => {
+                        const b = document.createElement('button');
+                        b.className = 'contact' + (selected?.id === u.id ? ' selected' : '');
+                        b.innerHTML = `<span class="avatar">${escapeHtml(u.name[0].toUpperCase())}</span><span>${escapeHtml(u.name)}<small>${statusLabels[u.status] || 'Conectado'}</small></span><i class="dot ${u.status === 'online' ? '' : u.status}"></i>`;
+                        b.onclick = () => selectUser(u);
+                        users.append(b)
+                    });
+                }
+                function selectUser(u) {
+                    selected = u;
+                    $('#peerName').textContent = u.name;
+                    $('#peerState').textContent = ` · ${statusLabels[u.status] || 'Conectado'}`;
+                    $('#audioCall').disabled = $('#videoCall').disabled = false;
+                    renderUsers();
+                    messages.replaceChildren();
+                    const history = chatHistory.get(u.id) || [];
+                    if (history.length)
+                        history.forEach(renderBubble);
+                    else {
+                        const hint = document.createElement('div');
+                        hint.className = 'hint';
+                        hint.textContent = `Inicia una conversación privada con ${u.name}.`;
+                        messages.append(hint)
+                    }
+                }
+                $('#composer').onsubmit = e => {
+                    e.preventDefault();
+                    const text = $('#messageInput').value.trim();
+                    if (!selected)
+                        return toast('Selecciona un contacto');
+                    if (!text)
+                        return;
+                    send({type: 'private_message', to: selected.id, text});
+                    appendMessage(me, text, new Date().toISOString(), true, selected.id);
+                    $('#messageInput').value = ''
+                };
+                function appendMessage(name, text, time, mine, peerId) {
+                    const item = {name, text, time, mine};
+                    const history = chatHistory.get(peerId) || [];
+                    history.push(item);
+                    chatHistory.set(peerId, history);
+                    if (selected?.id === peerId)
+                        renderBubble(item)
+                }
+                function renderBubble( { name, text, time, mine }) {
+                    const empty = messages.querySelector('.hint');
+                    if (empty)
+                        empty.remove();
+                    const b = document.createElement('div');
+                    b.className = 'bubble' + (mine ? ' mine' : '');
+                    b.textContent = text;
+                    const small = document.createElement('small');
+                    small.textContent = `${mine ? 'Tú' : name} · ${new Date(time || Date.now()).toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'})}`;
+                    b.append(small);
+                    messages.append(b);
+                    messages.scrollTop = messages.scrollHeight
+                }
+                function showFileOffer(m) {
+                    const area = $('#offerArea');
+                    area.replaceChildren();
+                    const row = document.createElement('div');
+                    row.className = 'offer';
+                    row.textContent = `${m.name} · ${formatBytes(m.size)} `;
+                    const accept = document.createElement('button');
+                    accept.textContent = 'Aceptar';
+                    accept.onclick = async () => {
+                        let writable = null;
+                        if ('showSaveFilePicker' in window) {
+                            try {
+                                const handle = await showSaveFilePicker({suggestedName: m.name});
+                                writable = await handle.createWritable()
+                            } catch {
+                                return
+                            }
+                        } else if (m.size > 512 * 1024 * 1024) {
+                            toast('Este navegador limita el guardado a 512 MB; usa Chrome/Edge para archivos grandes.');
+                            return
+                        }
+                        incoming.set(m.fileId, {...m, writable, chunks: [], received: 0});
+                        area.replaceChildren();
+                        send({type: 'file_accept', fileId: m.fileId});
+                        toast(`Recibiendo ${m.name}…`)
+                    };
+                    row.append(accept);
+                    area.append(row)
+                }
+                ;
+                async function receiveBinary(buffer) {
+                    try {
+                        const view = new DataView(buffer), idLength = view.getUint32(0);
+                        const fileId = new TextDecoder().decode(new Uint8Array(buffer, 4, idLength));
+                        const chunk = new Uint8Array(buffer, 4 + idLength);
+                        const transfer = incoming.get(fileId);
+                        if (!transfer)
+                            throw Error('No existe la transferencia local');
+                        if (transfer.writable)
+                            await transfer.writable.write(chunk);
+                        else
+                            transfer.chunks.push(chunk);
+                        transfer.received += chunk.byteLength;
+                        send({type: 'file_chunk_ack', fileId, bytes: chunk.byteLength});
+                        $('#progress').textContent = `Recibido ${formatBytes(transfer.received)} de ${formatBytes(transfer.size)}`
+                    } catch (e) {
+                        toast(`Error al guardar fragmento: ${e.message}`)
+                    }
+                }
+                async function finishIncoming(fileId) {
+                    const x = incoming.get(fileId);
+                    if (!x)
+                        return;
+                    incoming.delete(fileId);
+                    try {
+                        if (x.writable)
+                            await x.writable.close();
+                        else {
+                            const blob = new Blob(x.chunks, {type: x.mime});
+                            const a = document.createElement('a');
+                            a.href = URL.createObjectURL(blob);
+                            a.download = x.name;
+                            a.click();
+                            setTimeout(() => URL.revokeObjectURL(a.href), 60000)
+                        }
+                        toast(`Archivo recibido: ${x.name}`);
+                        $('#progress').textContent = `Archivo recibido: ${x.name}`
+                    } catch (e) {
+                        toast(`No se pudo finalizar el archivo: ${e.message}`)
+                    }
+                }
+                $('#fileInput').onchange = e => {
+                    const file = e.target.files[0];
+                    e.target.value = '';
+                    if (!file)
+                        return;
+                    if (!selected)
+                        return toast('Selecciona a quién enviar el archivo');
+                    if (file.size > 20 * 1024 * 1024 * 1024)
+                        return toast('El límite configurado es 20 GB');
+                    if (outgoing)
+                        return toast('Ya hay una transferencia en curso');
+                    const fileId = crypto.randomUUID();
+                    outgoing = {file, fileId, acked: 0, sending: false};
+                    $('#progress').textContent = `Esperando aceptación para ${file.name}…`;
+                    send({type: 'file_start', to: selected.id, fileId, name: file.name, size: file.size, mime: file.type || 'application/octet-stream'})
+                };
+                async function sendFileChunks(x) {
+                    if (x.sending)
+                        return;
+                    x.sending = true;
+                    try {
+                        const chunkSize = 60 * 1024;
+                        for (let offset = 0; offset < x.file.size; offset += chunkSize) {
+                            const chunk = await x.file.slice(offset, offset + chunkSize).arrayBuffer();
+                            await new Promise((resolve, reject) => {
+                                const timer = setTimeout(() => reject(Error('Tiempo de espera agotado')), 30000);
+                                x.resolve = () => {
+                                    clearTimeout(timer);
+                                    resolve()
+                                };
+                                ws.send(chunk)
+                            })
+                        }
+                        send({type: 'file_end', fileId: x.fileId})
+                    } catch (e) {
+                        toast(`Transferencia interrumpida: ${e.message}`);
+                        outgoing = null;
+                        $('#progress').textContent = 'Transferencia fallida'
+                    }
+                }
+                function formatBytes(n) {
+                    if (n < 1024)
+                        return `${n} B`;
+                    const units = ['KB', 'MB', 'GB', 'TB'];
+                    let i = -1;
+                    do {
+                        n /= 1024;
+                        i++
+                    } while (n >= 1024 && i < units.length - 1);
+                    return `${n.toFixed(1)} ${units[i]}`
+                }
+                function escapeHtml(s) {
+                    return s.replace(/[&<>"']/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[c]))
+                }
+                $('#createRoom').onclick = () => send({type: 'room_create'});
+                $('#joinRoom').onclick = () => {
+                    const code = $('#roomCode').value.trim();
+                    if (code)
+                        send({type: 'room_join', roomId: code})
+                };
+                async function startCall(video) {
+                    if (!selected)
+                        return;
+                    try {
+                        localStream = await navigator.mediaDevices.getUserMedia({audio: true, video});
+                        $('#localVideo').srcObject = localStream;
+                        $('#callbox').style.display = 'block';
+                        $('#callState').textContent = `Llamando a ${selected.name}…`;
+                        const pc = makePeer(selected.id, false, video);
+                        const offer = await pc.createOffer();
+                        await pc.setLocalDescription(offer);
+                        send({type: 'signal', to: selected.id, data: {kind: 'description', video, description: pc.localDescription}})
+                    } catch (e) {
+                        toast(`No se pudo iniciar la llamada: ${e.message}`)
+                    }
+                }
+                $('#audioCall').onclick = () => startCall(false);
+                $('#videoCall').onclick = () => startCall(true);
+                function makePeer(id, isRoom, video = true) {
+                    if (peers.has(id))
+                        return peers.get(id);
+                    const pc = new RTCPeerConnection({iceServers: [{urls: 'stun:stun.l.google.com:19302'}]});
+                    peers.set(id, pc);
+                    if (localStream)
+                        localStream.getTracks().forEach(t => pc.addTrack(t, localStream));
+                    else
+                        navigator.mediaDevices.getUserMedia({audio: true, video}).then(s => {
+                            localStream = s;
+                            $('#localVideo').srcObject = s;
+                            s.getTracks().forEach(t => pc.addTrack(t, s))
+                        }).catch(e => toast(`Permiso de micrófono/cámara: ${e.message}`));
+                    pc.onicecandidate = e => {
+                        if (e.candidate)
+                            send(isRoom ? {type: 'signal', roomId, to: id, data: {kind: 'candidate', candidate: e.candidate}} : {type: 'signal', to: id, data: {kind: 'candidate', candidate: e.candidate}})
+                    };
+                    pc.ontrack = e => {
+                        let v = document.getElementById(`remote-${id}`);
+                        if (!v) {
+                            v = document.createElement('video');
+                            v.id = `remote-${id}`;
+                            v.autoplay = true;
+                            v.playsInline = true;
+                            $('#remoteGrid').append(v)
+                        }
+                        v.srcObject = e.streams[0];
+                        $('#callState').textContent = 'Conectado'
+                    };
+                    pc.onconnectionstatechange = () => {
+                        if (pc.connectionState === 'failed' || pc.connectionState === 'disconnected')
+                            $('#callState').textContent = 'Conexión inestable'
+                    };
+                    return pc
+                }
+                async function offerToPeer(id, isRoom) {
+                    try {
+                        if (!localStream) {
+                            localStream = await navigator.mediaDevices.getUserMedia({audio: true, video: true});
+                            $('#localVideo').srcObject = localStream;
+                            $('#callbox').style.display = 'block'
+                        }
+                        const pc = makePeer(id, isRoom);
+                        const offer = await pc.createOffer();
+                        await pc.setLocalDescription(offer);
+                        send(isRoom ? {type: 'signal', roomId, to: id, data: {kind: 'description', description: pc.localDescription}} : {type: 'signal', to: id, data: {kind: 'description', description: pc.localDescription}})
+                    } catch (e) {
+                        toast(`No se pudo iniciar llamada grupal: ${e.message}`)
+                    }
+                }
+                async function handleSignal(m) {
+                    const data = m.data || {}, video = data.video !== false;
+                    if (data.kind === 'description' && data.description?.type === 'offer' && !localStream) {
+                        try {
+                            localStream = await navigator.mediaDevices.getUserMedia({audio: true, video});
+                            $('#localVideo').srcObject = localStream;
+                            $('#callbox').style.display = 'block'
+                        } catch (e) {
+                            toast(`Permiso multimedia requerido: ${e.message}`);
+                            return
+                        }
+                    }
+                    const pc = makePeer(m.from, !!m.roomId, video);
+                    try {
+                        if (data.kind === 'description') {
+                            await pc.setRemoteDescription(data.description);
+                            if (data.description.type === 'offer') {
+                                const answer = await pc.createAnswer();
+                                await pc.setLocalDescription(answer);
+                                send(m.roomId ? {type: 'signal', roomId: m.roomId, to: m.from, data: {kind: 'description', description: pc.localDescription}} : {type: 'signal', to: m.from, data: {kind: 'description', description: pc.localDescription}})
+                            }
+                        } else if (data.kind === 'candidate' && data.candidate)
+                            await pc.addIceCandidate(data.candidate)
+                    } catch (e) {
+                        toast(`Error WebRTC: ${e.message}`)
+                    }
+                }
+                function closePeer(id) {
+                    peers.get(id)?.close();
+                    peers.delete(id);
+                    document.getElementById(`remote-${id}`)?.remove()
+                }
+                $('#hangup').onclick = () => {
+                    peers.forEach(pc => pc.close());
+                    peers.clear();
+                    localStream?.getTracks().forEach(t => t.stop());
+                    localStream = null;
+                    $('#remoteGrid').replaceChildren();
+                    $('#localVideo').srcObject = null;
+                    $('#callbox').style.display = 'none';
+                    if (roomId)
+                        send({type: 'room_leave'});
+                    roomId = null
+                };
+            })();
+        </script>
+    </body>
+
+</html>

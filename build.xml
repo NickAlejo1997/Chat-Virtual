@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<project name="Chat-Virtual" default="default" basedir=".">
+    <description>Builds, tests, and runs the project Chat-Virtual.</description>
+    <import file="nbproject/build-impl.xml"/>
+
+    <target name="download-gson">
+        <mkdir dir="${build.dir}/deps"/>
+        <get src="https://repo.maven.apache.org/maven2/com/google/code/gson/gson/2.13.2/gson-2.13.2.jar"
+             dest="${build.dir}/deps/gson-2.13.2.jar" skipexisting="true"/>
+    </target>
+    <target name="-pre-compile" depends="download-gson"/>
+    <target name="-pre-compile-single" depends="download-gson"/>
+
+    <target name="-post-compile">
+        <mkdir dir="${build.web.dir}/WEB-INF/lib"/>
+        <copy file="${build.dir}/deps/gson-2.13.2.jar"
+              todir="${build.web.dir}/WEB-INF/lib"/>
+    </target>
+</project>
