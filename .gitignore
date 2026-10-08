@@ -1,0 +1,12 @@
+# Salidas generadas por NetBeans, Ant y Maven
+/build/
+/dist/
+/target/
+/nbproject/private/
+/nbbuild/
+/nbdist/
+
+# Archivos locales del sistema y logs
+*.log
+Thumbs.db
+.DS_Store
